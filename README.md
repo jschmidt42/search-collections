@@ -13,3 +13,7 @@ Display search results as collections
 3. Open the Search Collections window
 
   ![image](https://user-images.githubusercontent.com/4054655/113035377-2e535300-9161-11eb-918d-b60d566ff907.png)
+  
+4. Filter the collection view and drag & drop items
+
+  ![image](https://user-images.githubusercontent.com/4054655/113036051-d0733b00-9161-11eb-9ba8-b8f0fc8d85d8.png)
