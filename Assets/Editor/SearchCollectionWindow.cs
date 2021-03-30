@@ -8,13 +8,35 @@ using UnityEngine;
 using SearchField = UnityEditor.Search.SearchField;
 using System.Linq;
 
-public class SearchCollectionWindow : EditorWindow
+public class SearchCollectionWindow : EditorWindow, ISearchView
 {
     SearchCollectionTreeView m_TreeView;
 
     [SerializeField] string m_SearchText;
     [SerializeField] bool m_FocusSearchField = true;
     [SerializeField] TreeViewState m_TreeViewState;
+
+    public ISearchList results => throw new NotSupportedException();
+    public SearchContext context => throw new NotSupportedException();
+
+    public DisplayMode displayMode => DisplayMode.List;
+    public float itemIconSize { get => 0f; set => throw new NotSupportedException(); }
+    public bool multiselect { get => true; set => throw new NotSupportedException(); }
+
+    public Action<SearchItem, bool> selectCallback => throw new NotSupportedException();
+    public Func<SearchItem, bool> filterCallback => throw new NotSupportedException();
+    public Action<SearchItem> trackingCallback => throw new NotSupportedException();
+
+    public SearchSelection selection
+    {
+        get
+        {
+            return new SearchSelection(m_TreeView.GetSelection()
+                .Select(idx => m_TreeView.GetRows()[idx] as SearchCollectionTreeView.SearchTreeViewItem)
+                .Where(e => e != null)
+                .Select(e => e.item));
+        }
+    }
 
     void OnEnable()
     {
@@ -26,7 +48,8 @@ public class SearchCollectionWindow : EditorWindow
 
     void OnGUI()
     {
-        FocusSearchField();
+        var evt = Event.current;
+        HandleShortcuts(evt);
         using (new EditorGUILayout.VerticalScope(GUIStyle.none, GUILayout.ExpandHeight(true)))
         {
             using (new GUILayout.HorizontalScope(Styles.toolbar))
@@ -39,6 +62,27 @@ public class SearchCollectionWindow : EditorWindow
         }
     }
 
+    void HandleShortcuts(Event evt)
+    {
+        if (evt.type == EventType.KeyUp && evt.keyCode == KeyCode.F5)
+        {
+            m_TreeView.Reload();
+            evt.Use();
+        }
+        else if (evt.type == EventType.KeyUp && evt.keyCode == KeyCode.Escape)
+        {
+            evt.Use();
+            Close();
+        }
+        else
+        {
+            FocusSearchField();
+        }
+
+        if (evt.type == EventType.Used)
+            Repaint();
+    }
+
     void DrawTreeView()
     {
         var treeViewRect = EditorGUILayout.GetControlRect(false, -1, GUIStyle.none, GUILayout.ExpandHeight(true));
@@ -47,11 +91,11 @@ public class SearchCollectionWindow : EditorWindow
 
     bool DrawSearchField()
     {
-        var searchFieldText = m_SearchText;
-        var searchTextRect = SearchField.GetRect(searchFieldText, position.width, (Styles.toolbarButton.fixedWidth + Styles.toolbarButton.margin.left) + Styles.toolbarButton.margin.right);
+        var searchTextRect = SearchField.GetRect(m_SearchText, position.width, 10f);
         var searchClearButtonRect = Styles.searchFieldBtn.margin.Remove(searchTextRect);
         searchClearButtonRect.xMin = searchClearButtonRect.xMax - SearchField.s_CancelButtonWidth;
 
+        EditorGUIUtility.AddCursorRect(searchClearButtonRect, MouseCursor.Arrow);
         if (Event.current.type == EventType.MouseUp && searchClearButtonRect.Contains(Event.current.mousePosition))
         {
             ClearSearch();
@@ -66,16 +110,10 @@ public class SearchCollectionWindow : EditorWindow
                 return true;
         }
 
-        if (!string.IsNullOrEmpty(m_SearchText))
-        {
-            EditorGUIUtility.AddCursorRect(searchClearButtonRect, MouseCursor.Arrow);
-            if (GUI.Button(searchClearButtonRect, Icons.clear, Styles.searchFieldBtn))
-            {
-                ClearSearch();
-                return true;
-            }
-        }
-        return false;
+        if (string.IsNullOrEmpty(m_SearchText))
+            return false;
+        
+        return GUI.Button(searchClearButtonRect, Icons.clear, Styles.searchFieldBtn);
     }
 
     void Update()
@@ -115,6 +153,52 @@ public class SearchCollectionWindow : EditorWindow
     {
         SearchCollectionWindow wnd = GetWindow<SearchCollectionWindow>();
         wnd.titleContent = new GUIContent("Collections");
+    }
+
+    public void SetSelection(params int[] selection)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void AddSelection(params int[] selection)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void SetSearchText(string searchText, TextCursorPlacement moveCursor = TextCursorPlacement.MoveLineEnd)
+    {
+        SetSearchText(searchText, moveCursor, -1);
+    }
+
+    public void SetSearchText(string searchText, TextCursorPlacement moveCursor, int cursorInsertPosition)
+    {
+        m_SearchText = searchText;
+        UpdateView();
+    }
+
+    public void Refresh(RefreshFlags reason = RefreshFlags.Default)
+    {
+        m_TreeView.Reload();
+        Repaint();
+    }
+
+    public void ExecuteAction(SearchAction action, SearchItem[] items, bool endSearch = true)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void ShowItemContextualMenu(SearchItem item, Rect contextualActionPosition)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void SelectSearch()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void Dispose()
+    {
     }
 }
 
@@ -166,7 +250,7 @@ class SearchCollectionTreeView : TreeView
 
         public override void Select()
         {
-            Utils.SelectAssetFromPath(AssetDatabase.GetAssetPath(m_SearchQueryAsset), true);
+            // Do nothing
         }
 
         public override bool CanStartDrag()
@@ -175,11 +259,13 @@ class SearchCollectionTreeView : TreeView
         }
     }
 
-    class SearchTreeViewItem : TreeViewItem
+    public class SearchTreeViewItem : TreeViewItem
     {
         static int s_NextId = 10000;
 
         SearchItem m_SearchItem;
+        public SearchItem item => m_SearchItem;
+
         public SearchTreeViewItem(SearchContext context, SearchItem item)
             : base(s_NextId++, 1, item.GetLabel(context))
         {
@@ -311,5 +397,6 @@ class SearchCollectionTreeView : TreeView
     {
         EditorApplication.tick -= DelayedUpdateCollections;
         BuildRows(rootItem);
+        Repaint();
     }
 }
