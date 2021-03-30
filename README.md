@@ -1,6 +1,10 @@
 # Unity Search Collections
 Display search results as collections
 
+## Source Code
+
+https://github.com/jschmidt42/search-collections/blob/master/Assets/Editor/SearchCollectionWindow.cs
+
 ## Howto
 1. Use the search window to search for something
 
