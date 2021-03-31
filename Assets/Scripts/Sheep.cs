@@ -48,7 +48,7 @@ public class Sheep : MonoBehaviour
                     mAnimator.SetTrigger("die");
                     Destroy(GetComponent<Rigidbody>());
 
-                    Invoke("ShowItemsDeadState", 1.2f);
+                    Invoke(nameof(ShowItemsDeadState), 1.2f);
                 }
             }
         }

@@ -1,0 +1,10 @@
+﻿[*.cs]
+
+# UNT0007: Null coalescing on Unity objects
+dotnet_diagnostic.UNT0007.severity = suggestion
+
+# Default severity for analyzer diagnostics with category 'Correctness'
+dotnet_analyzer_diagnostic.category-Correctness.severity = silent
+
+# Default severity for all analyzer diagnostics
+dotnet_analyzer_diagnostic.severity = silent

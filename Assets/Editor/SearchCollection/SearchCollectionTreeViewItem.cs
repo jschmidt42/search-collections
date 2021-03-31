@@ -7,13 +7,11 @@ namespace UnityEditor.Search.Collections
 { 
     class SearchCollectionTreeViewItem : SearchTreeViewItem
     {        
-        readonly HashSet<SearchItem> m_Items;
         readonly SearchCollection m_Collection;
         public SearchCollectionTreeViewItem(SearchCollectionTreeView treeView, SearchCollection collection)
             : base(treeView)
         {
             m_Collection = collection ?? throw new ArgumentNullException(nameof(collection));
-            m_Items = new HashSet<SearchItem>();
 
             icon = Icons.quicksearch;
             displayName = m_Collection.query.name;
@@ -25,11 +23,13 @@ namespace UnityEditor.Search.Collections
         public void FetchItems()
         {
             var context = SearchService.CreateContext(m_Collection.query.providerIds, m_Collection.query.text);
+            foreach (var item in m_Collection.items)
+                AddChild(new SearchTreeViewItem(m_TreeView, context, item));
             SearchService.Request(context, (_, items) =>
             {
                 foreach (var item in items)
                 {
-                    if (m_Items.Add(item))
+                    if (m_Collection.items.Add(item))
                         AddChild(new SearchTreeViewItem(m_TreeView, context, item));
                 }
             },
@@ -76,8 +76,8 @@ namespace UnityEditor.Search.Collections
 
         public void Refresh()
         {
-            m_Items.Clear();
             children.Clear();
+            m_Collection.items.Clear();
             FetchItems();
         }
     }

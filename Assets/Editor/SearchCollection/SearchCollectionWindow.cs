@@ -16,7 +16,7 @@ using UnityEngine;
 
 namespace UnityEditor.Search.Collections
 {
-    public class SearchCollectionWindow : EditorWindow, ISearchView
+    class SearchCollectionWindow : EditorWindow, ISearchCollectionView
     {
         static class InnerStyles
         {
@@ -65,6 +65,18 @@ namespace UnityEditor.Search.Collections
             }
         }
 
+        public ICollection<SearchCollection> collections => m_Collections;
+        public ISet<string> fieldNames => EnumerateFieldNames();
+
+        private ISet<string> EnumerateFieldNames()
+        {
+            var names = new HashSet<string>();
+            foreach (var c in m_Collections)
+                foreach (var e in c.items)
+                    names.UnionWith(e.GetFieldNames());
+            return names;
+        }
+
         void OnEnable()
         {
             if (m_WindowCounter == 0)
@@ -75,7 +87,7 @@ namespace UnityEditor.Search.Collections
             if (m_Collections == null)
                 m_Collections = LoadCollections(m_WindowCounter);
 
-            m_TreeView = new SearchCollectionTreeView(m_TreeViewState, m_Collections);
+            m_TreeView = new SearchCollectionTreeView(m_TreeViewState, this);
         }
 
         void OnDisable()
@@ -156,11 +168,16 @@ namespace UnityEditor.Search.Collections
                 GUIUtility.hotControl = 0;
 
                 GenericMenu menu = new GenericMenu();
-                menu.AddItem(new GUIContent("Load collection..."), false, LoadCollection);
+                AddCollectionMenus(menu);
 
                 menu.DropDown(rect);
                 Event.current.Use();
             }
+        }
+
+        private void AddCollectionMenus(GenericMenu menu)
+        {
+            menu.AddItem(new GUIContent("Load collection..."), false, LoadCollection);
         }
 
         private void LoadCollection()
@@ -289,6 +306,16 @@ namespace UnityEditor.Search.Collections
 
         public void Dispose()
         {
+        }
+
+        public void OpenContextualMenu()
+        {
+            var menu = new GenericMenu();
+
+            AddCollectionMenus(menu);
+            menu.AddSeparator("");
+            menu.AddItem(new GUIContent("Refresh"), false, () => m_TreeView.Reload());
+            menu.ShowAsContext();
         }
     }
 }

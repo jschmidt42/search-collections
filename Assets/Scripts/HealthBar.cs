@@ -47,10 +47,4 @@ public class HealthBar : MonoBehaviour {
     {
         get { return mCurrentValue;  }
     }
-
-	// Use this for initialization
-	void Start () {
-
-	}
-
 }

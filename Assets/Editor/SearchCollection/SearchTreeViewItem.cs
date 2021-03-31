@@ -48,25 +48,27 @@ namespace UnityEditor.Search.Collections
             foreach (var action in m_SearchItem.provider.actions.Where(a => a.enabled(currentSelection)))
             {
                 var itemName = !string.IsNullOrWhiteSpace(action.content.text) ? action.content.text : action.content.tooltip;
-                menu.AddItem(new GUIContent(itemName, action.content.image), false, () => ExecuteAction(action, currentSelection));
+                menu.AddItem(new GUIContent(itemName, action.content.image), false, () => ExecuteAction(action, currentSelection, true));
             }
 
             menu.ShowAsContext();
         }
 
-        private void ExecuteAction(SearchAction action, SearchItem[] currentSelection)
+        private void ExecuteAction(SearchAction action, SearchItem[] currentSelection, bool refresh = false)
         {
             if (action == null)
                 return;
             if (action.handler != null)
             {
                 action.handler(m_SearchItem);
-                Refresh();
+                if (refresh)
+                    Refresh();
             }
             else if (action.execute != null)
             {
                 action.execute(currentSelection);
-                Refresh();
+                if (refresh)
+                    Refresh();
             }
         }
 

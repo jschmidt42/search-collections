@@ -2,24 +2,28 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEditor.IMGUI.Controls;
+using UnityEngine;
 
 namespace UnityEditor.Search.Collections
 {
     class SearchCollectionTreeView : TreeView
     {
-        private List<SearchCollection> m_Collections;
+        readonly ISearchCollectionView searchView;
+        public ICollection<SearchCollection> collections => searchView.collections;
 
-        public SearchCollectionTreeView(TreeViewState treeViewState, List<SearchCollection> collections)
-            : base(treeViewState)
+        public SearchCollectionTreeView(TreeViewState treeViewState, ISearchCollectionView searchView)
+            : base(treeViewState, new SearchCollectionColumnHeader(searchView))
         {
-            m_Collections = collections ?? throw new ArgumentNullException(nameof(collections));
+            this.searchView = searchView ?? throw new ArgumentNullException(nameof(searchView));
+            showAlternatingRowBackgrounds = true;
+
             Reload();
         }
 
         protected override TreeViewItem BuildRoot()
         {
             var root = new TreeViewItem { id = int.MinValue, depth = -1, displayName = "Root", children = new List<TreeViewItem>() };
-            foreach (var coll in m_Collections)
+            foreach (var coll in collections)
                 root.AddChild(new SearchCollectionTreeViewItem(this, coll));
             return root;
         }
@@ -28,6 +32,33 @@ namespace UnityEditor.Search.Collections
         {
             EditorApplication.tick -= DelayedUpdateCollections;
             return base.BuildRows(rowItem);
+        }
+
+        protected override void RowGUI(RowGUIArgs args)
+        {
+            if (args.item is SearchTreeViewItem tvi && tvi.item != null)
+            {
+                for (int i = 0, end = args.GetNumVisibleColumns(); i < end; ++i)
+                {
+                    var cellRect = args.GetCellRect(i);
+                    if (i == 0)
+                    {
+                        var mainArgs = args;
+                        mainArgs.rowRect = cellRect;
+                        base.RowGUI(mainArgs);
+                    }
+                    else
+                    {
+                        var v = tvi.item.GetValue();
+                        if (v != null)
+                            GUI.Label(cellRect, v.ToString());
+                    }
+                }
+            }
+            else
+            { 
+                base.RowGUI(args); 
+            }
         }
 
         protected override void SelectionChanged(IList<int> selectedIds)
@@ -46,10 +77,27 @@ namespace UnityEditor.Search.Collections
                 stvi.Open();
         }
 
+        protected override void ContextClicked()
+        {
+            OpenContextualMenu(() => searchView.OpenContextualMenu());
+        }
+
         protected override void ContextClickedItem(int id)
         {
             if (FindItem(id, rootItem) is SearchTreeViewItem stvi)
-                stvi.OpenContextualMenu();
+                OpenContextualMenu(() => stvi.OpenContextualMenu());
+        }
+
+        bool m_InContextualMenu = false;
+        private bool OpenContextualMenu(Action handler)
+        {
+            if (m_InContextualMenu)
+                return false;
+            handler();
+            m_InContextualMenu = true;
+            EditorApplication.delayCall += () => m_InContextualMenu = false;
+            Repaint();
+            return true;
         }
 
         protected override bool CanStartDrag(CanStartDragArgs args)
@@ -71,14 +119,14 @@ namespace UnityEditor.Search.Collections
 
         public void Add(SearchCollection newCollection)
         {
-            m_Collections.Add(newCollection);
+            collections.Add(newCollection);
             rootItem.AddChild(new SearchCollectionTreeViewItem(this, newCollection));
             BuildRows(rootItem);
         }
 
         public void Remove(SearchCollectionTreeViewItem collectionItem, SearchCollection collection)
         {
-            m_Collections.Remove(collection);
+            collections.Remove(collection);
             rootItem.children.Remove(collectionItem);
             BuildRows(rootItem);
         }

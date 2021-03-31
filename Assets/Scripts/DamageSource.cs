@@ -46,7 +46,7 @@ public class DamageSource : MonoBehaviour {
         while (_isCausingDamage)
         {
             player.TakeDamage(DamageAmount);
-            TakeDamage(player, repeatRate);
+            yield return TakeDamage(player, repeatRate);
 
             if (player.IsDead)
                 _isCausingDamage = false;

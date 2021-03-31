@@ -72,7 +72,7 @@ public class PlayerController : MonoBehaviour
         startFood = Food;
         mFoodBar.SetValue(Food);
 
-        InvokeRepeating("IncreaseHunger", 0, HungerRate);
+        InvokeRepeating(nameof(IncreaseHunger), 0, HungerRate);
     }
 
 
@@ -150,7 +150,7 @@ public class PlayerController : MonoBehaviour
         {
             rbItem.AddForce(transform.forward * 2.0f, ForceMode.Impulse);
 
-            Invoke("DoDropItem", 0.25f);
+            Invoke(nameof(DoDropItem), 0.25f);
         }
     }
 
