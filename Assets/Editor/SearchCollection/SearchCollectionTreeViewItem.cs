@@ -9,10 +9,9 @@ namespace UnityEditor.Search.Collections
     {        
         readonly HashSet<SearchItem> m_Items;
         readonly SearchCollection m_Collection;
-        readonly SearchCollectionTreeView m_TreeView;
         public SearchCollectionTreeViewItem(SearchCollectionTreeView treeView, SearchCollection collection)
+            : base(treeView)
         {
-            m_TreeView = treeView ?? throw new ArgumentNullException(nameof(treeView));
             m_Collection = collection ?? throw new ArgumentNullException(nameof(collection));
             m_Items = new HashSet<SearchItem>();
 
@@ -31,7 +30,7 @@ namespace UnityEditor.Search.Collections
                 foreach (var item in items)
                 {
                     if (m_Items.Add(item))
-                        AddChild(new SearchTreeViewItem(context, item));
+                        AddChild(new SearchTreeViewItem(m_TreeView, context, item));
                 }
             },
             _ =>
@@ -75,7 +74,7 @@ namespace UnityEditor.Search.Collections
             menu.ShowAsContext();
         }
 
-        private void Refresh()
+        public void Refresh()
         {
             m_Items.Clear();
             children.Clear();

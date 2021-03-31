@@ -12,16 +12,20 @@ namespace UnityEditor.Search.Collections
         SearchItem m_SearchItem;
         public SearchItem item => m_SearchItem;
 
-        public SearchTreeViewItem()
+        protected readonly SearchCollectionTreeView m_TreeView;
+
+        public SearchTreeViewItem(SearchCollectionTreeView treeView)
             : base(s_NextId++, 0)
         {
-            m_SearchItem = null;
+            m_TreeView = treeView ?? throw new ArgumentNullException(nameof(treeView));
+            m_SearchItem = new SearchItem(Guid.NewGuid().ToString("N"));
         }
 
-        public SearchTreeViewItem(SearchContext context, SearchItem item)
-            : base(s_NextId++, 0, item.GetLabel(context))
+        public SearchTreeViewItem(SearchCollectionTreeView treeView, SearchContext context, SearchItem item)
+            : this(treeView)
         {
             m_SearchItem = item;
+            displayName = item.GetLabel(context);
             icon = item.GetThumbnail(context, cacheThumbnail: false);
         }
 
@@ -55,9 +59,21 @@ namespace UnityEditor.Search.Collections
             if (action == null)
                 return;
             if (action.handler != null)
+            {
                 action.handler(m_SearchItem);
+                Refresh();
+            }
             else if (action.execute != null)
+            {
                 action.execute(currentSelection);
+                Refresh();
+            }
+        }
+
+        void Refresh()
+        {
+            if (parent is SearchCollectionTreeViewItem ctvi)
+                EditorApplication.CallDelayed(() => ctvi.Refresh(), 2d);
         }
 
         public virtual bool CanStartDrag()
