@@ -31,3 +31,8 @@ MonoBehaviour:
     itemSize: 1
     displayMode: 32
     group: all
+    tableConfig:
+      id: 
+      name: 
+      columns: []
+  icon: {fileID: 0}

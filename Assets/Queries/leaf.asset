@@ -31,3 +31,8 @@ MonoBehaviour:
     itemSize: 1
     displayMode: 32
     group: all
+    tableConfig:
+      id: 
+      name: 
+      columns: []
+  icon: {fileID: 2800000, guid: f3c11ecf57e990043a9bcd79ee4528f2, type: 3}

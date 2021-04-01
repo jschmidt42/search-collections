@@ -53,4 +53,4 @@ MonoBehaviour:
           m_Text: path
           m_Image: {fileID: 0}
           m_Tooltip: 
-  icon: {fileID: 0}
+  icon: {fileID: 2800000, guid: ab97eea803c1fb642921225713e2020a, type: 3}
