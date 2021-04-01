@@ -56,20 +56,27 @@ namespace UnityEditor.Search.Collections
             }
             else if (args.item is SearchTreeViewItem tvi)
             {
-                for (int i = 0, end = args.GetNumVisibleColumns(); i < end; ++i)
+                var v = tvi.item.GetValue();
+                if (v == null)
                 {
-                    var cellRect = args.GetCellRect(i);
-                    if (i == 0)
+                    base.RowGUI(args);
+                }
+                else
+                {
+                    for (int i = 0, end = args.GetNumVisibleColumns(); i < end; ++i)
                     {
-                        var mainArgs = args;
-                        mainArgs.rowRect = cellRect;
-                        base.RowGUI(mainArgs);
-                    }
-                    else
-                    {
-                        var v = tvi.item.GetValue();
-                        if (v != null)
-                            GUI.Label(cellRect, v.ToString());
+                        var cellRect = args.GetCellRect(i);
+                        if (i == 0)
+                        {
+                            var mainArgs = args;
+                            mainArgs.rowRect = cellRect;
+                            base.RowGUI(mainArgs);
+                        }
+                        else
+                        {
+                            if (v != null)
+                                GUI.Label(cellRect, v.ToString());
+                        }
                     }
                 }
             }
