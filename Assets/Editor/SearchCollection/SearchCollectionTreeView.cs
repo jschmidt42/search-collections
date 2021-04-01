@@ -18,6 +18,7 @@ namespace UnityEditor.Search.Collections
             showAlternatingRowBackgrounds = true;
 
             Reload();
+            EditorApplication.CallDelayed(() => multiColumnHeader.ResizeToFit());
         }
 
         protected override TreeViewItem BuildRoot()
@@ -88,16 +89,10 @@ namespace UnityEditor.Search.Collections
                 OpenContextualMenu(() => stvi.OpenContextualMenu());
         }
 
-        bool m_InContextualMenu = false;
-        private bool OpenContextualMenu(Action handler)
+        private void OpenContextualMenu(Action handler)
         {
-            if (m_InContextualMenu)
-                return false;
             handler();
-            m_InContextualMenu = true;
-            EditorApplication.delayCall += () => m_InContextualMenu = false;
-            Repaint();
-            return true;
+            Event.current.Use();
         }
 
         protected override bool CanStartDrag(CanStartDragArgs args)

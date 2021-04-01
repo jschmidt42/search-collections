@@ -18,30 +18,25 @@ namespace UnityEditor.Search.Collections
 {
     class SearchCollectionWindow : EditorWindow, ISearchCollectionView
     {
-        static class InnerStyles
-        {
-            public static GUIContent createContent = EditorGUIUtility.IconContent("CreateAddNew");
-            public static GUIStyle toolbarCreateAddNewDropDown = new GUIStyle(EditorStyles.toolbarCreateAddNewDropDown)
-            {
-                fixedWidth = 28f,
-                fixedHeight = 14f,
-                padding = new RectOffset(0, 0, 0, 0)
-            };
-            public static GUIStyle toolbar = new GUIStyle(Styles.toolbar)
-            {
-                padding = new RectOffset(4, 4, 4, 4)
-            };
-        }
-
-        static int s_GlobalWindowCounter = 1;
-
         SearchCollectionTreeView m_TreeView;
 
-        [SerializeField] int m_WindowCounter;
         [SerializeField] string m_SearchText;
         [SerializeField] bool m_FocusSearchField = true;
         [SerializeField] TreeViewState m_TreeViewState;
         [SerializeField] List<SearchCollection> m_Collections;
+
+        public string searchText 
+        { 
+            get => m_SearchText;
+            set  
+            {
+                if (!string.Equals(value, m_SearchText, StringComparison.Ordinal))
+                {
+                    m_SearchText = value;
+                    UpdateView();
+                }
+            }
+        }
 
         public ISearchList results => throw new NotSupportedException();
         public SearchContext context => throw new NotSupportedException();
@@ -79,26 +74,23 @@ namespace UnityEditor.Search.Collections
 
         void OnEnable()
         {
-            if (m_WindowCounter == 0)
-                m_WindowCounter = s_GlobalWindowCounter++;
             if (m_TreeViewState == null)
                 m_TreeViewState = new TreeViewState();
 
             if (m_Collections == null)
-                m_Collections = LoadCollections(m_WindowCounter);
+                m_Collections = LoadCollections();
 
             m_TreeView = new SearchCollectionTreeView(m_TreeViewState, this);
         }
 
         void OnDisable()
         {
-            s_GlobalWindowCounter--;
-            SaveWindowCollections(m_WindowCounter);
+            SaveWindowCollections();
         }
 
-        private List<SearchCollection> LoadCollections(int windowId)
+        private List<SearchCollection> LoadCollections()
         {
-            var collectionPaths = EditorPrefs.GetString($"SearchCollection.{windowId}", "")
+            var collectionPaths = EditorPrefs.GetString("SearchCollections", "")
                 .Split(new [] { ";;;" }, StringSplitOptions.RemoveEmptyEntries);
             var collection = collectionPaths
                 .Select(p => AssetDatabase.LoadAssetAtPath<SearchQuery>(p))
@@ -107,27 +99,17 @@ namespace UnityEditor.Search.Collections
             return new List<SearchCollection>(collection);
         }
 
-        private void SaveWindowCollections(int windowId)
+        private void SaveWindowCollections()
         {
             var collectionPaths = string.Join(";;;", m_Collections.Select(c => AssetDatabase.GetAssetPath(c.query)));
-            EditorPrefs.SetString($"SearchCollection.{windowId}", collectionPaths);
+            EditorPrefs.SetString("SearchCollections", collectionPaths);
         }
 
         void OnGUI()
         {
             var evt = Event.current;
             HandleShortcuts(evt);
-            using (new EditorGUILayout.VerticalScope(GUIStyle.none, GUILayout.ExpandHeight(true)))
-            {
-                using (new GUILayout.HorizontalScope(InnerStyles.toolbar))
-                {
-                    if (DrawSearchField())
-                        UpdateView();
-                    DrawButtons();
-                }
-
-                DrawTreeView();
-            }
+            DrawTreeView();
         }
 
         void HandleShortcuts(Event evt)
@@ -157,25 +139,7 @@ namespace UnityEditor.Search.Collections
             m_TreeView.OnGUI(treeViewRect);
         }
 
-        public void DrawButtons()
-        {
-            Rect rect = GUILayoutUtility.GetRect(InnerStyles.createContent, InnerStyles.toolbarCreateAddNewDropDown);
-            bool mouseOver = rect.Contains(Event.current.mousePosition);
-            if (Event.current.type == EventType.Repaint)
-                InnerStyles.toolbarCreateAddNewDropDown.Draw(rect, InnerStyles.createContent, mouseOver, false, false, false);
-            else if (Event.current.type == EventType.MouseDown && mouseOver)
-            {
-                GUIUtility.hotControl = 0;
-
-                GenericMenu menu = new GenericMenu();
-                AddCollectionMenus(menu);
-
-                menu.DropDown(rect);
-                Event.current.Use();
-            }
-        }
-
-        private void AddCollectionMenus(GenericMenu menu)
+        public void AddCollectionMenus(GenericMenu menu)
         {
             menu.AddItem(new GUIContent("Load collection..."), false, LoadCollection);
         }
@@ -201,28 +165,6 @@ namespace UnityEditor.Search.Collections
             m_TreeView.Add(new SearchCollection(searchQuery));
         }
 
-        bool DrawSearchField()
-        {
-            var hashForSearchField = "CollectionsSearchField".GetHashCode();
-            var searchTextRect = GUILayoutUtility.GetRect(-1, EditorGUI.kSingleLineHeight, EditorStyles.toolbarSearchField, GUILayout.ExpandWidth(true));
-            int searchFieldControlID = GUIUtility.GetControlID(hashForSearchField, FocusType.Passive, searchTextRect);
-
-            if (Event.current.type != EventType.KeyDown || Event.current.keyCode != KeyCode.None || Event.current.character != '\r')
-            {
-                var previousSearchText = m_SearchText;
-                m_SearchText = EditorGUI.ToolbarSearchField(
-                    searchFieldControlID,
-                    searchTextRect,
-                    m_SearchText,
-                    EditorStyles.toolbarSearchField,
-                    string.IsNullOrEmpty(m_SearchText) ? GUIStyle.none : EditorStyles.toolbarSearchFieldCancelButton);
-                if (!string.Equals(previousSearchText, m_SearchText, StringComparison.Ordinal))
-                    return true;
-            }
-
-            return false;
-        }
-
         void Update()
         {
             if (focusedWindow == this && SearchField.UpdateBlinkCursorState(EditorApplication.timeSinceStartup))
@@ -231,9 +173,8 @@ namespace UnityEditor.Search.Collections
 
         void ClearSearch()
         {
-            m_SearchText = "";
+            searchText = "";
             m_FocusSearchField = true;
-            UpdateView();
             GUI.changed = true;
             GUI.FocusControl(null);
             GUIUtility.ExitGUI();
