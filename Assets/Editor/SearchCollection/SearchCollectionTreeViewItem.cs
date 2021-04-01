@@ -6,14 +6,18 @@ using UnityEngine;
 namespace UnityEditor.Search.Collections
 { 
     class SearchCollectionTreeViewItem : SearchTreeViewItem
-    {        
+    {
+        public static readonly GUIContent collectionIcon = EditorGUIUtility.IconContent("ListView");
+
         readonly SearchCollection m_Collection;
+        public SearchCollection collection => m_Collection;
+
         public SearchCollectionTreeViewItem(SearchCollectionTreeView treeView, SearchCollection collection)
             : base(treeView)
         {
             m_Collection = collection ?? throw new ArgumentNullException(nameof(collection));
 
-            icon = Icons.quicksearch;
+            icon = m_Collection.query.icon != null ? m_Collection.query.icon : (collectionIcon.image as Texture2D);
             displayName = m_Collection.query.name;
             children = new List<TreeViewItem>();
 
@@ -65,13 +69,25 @@ namespace UnityEditor.Search.Collections
         {
             var menu = new GenericMenu();
             menu.AddItem(new GUIContent("Refresh"), false, () => Refresh());
-            menu.AddSeparator("/Edit");
-            menu.AddItem(new GUIContent("Edit"), false, () => Selection.activeObject = m_Collection.query);
+            menu.AddSeparator("");
+            menu.AddItem(new GUIContent("Set Color"), false, SelectColor);
             menu.AddItem(new GUIContent("Open"), false, () => Open());
-            menu.AddSeparator("/Remove");
+            menu.AddItem(new GUIContent("Edit"), false, () => Selection.activeObject = m_Collection.query);
+            menu.AddSeparator("");
             menu.AddItem(new GUIContent("Remove"), false, () => m_TreeView.Remove(this, m_Collection));
 
             menu.ShowAsContext();
+        }
+
+        private void SelectColor()
+        {
+            var c = collection.color;
+            ColorPicker.Show(SetColor, new Color(c.r, c.g, c.b, 1.0f), false, false);
+        }
+
+        private void SetColor(Color color)
+        {
+            m_Collection.color = color;
         }
 
         public void Refresh()
@@ -79,6 +95,11 @@ namespace UnityEditor.Search.Collections
             children.Clear();
             m_Collection.items.Clear();
             FetchItems();
+        }
+
+        public override bool DrawRow(Rect rowRect)
+        {
+            return true;
         }
     }
 }

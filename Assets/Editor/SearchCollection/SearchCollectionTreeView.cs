@@ -37,7 +37,24 @@ namespace UnityEditor.Search.Collections
 
         protected override void RowGUI(RowGUIArgs args)
         {
-            if (args.item is SearchTreeViewItem tvi && tvi.item != null)
+            if (args.item is SearchCollectionTreeViewItem ctvi)
+            {
+                if (Event.current.type == EventType.Repaint)
+                {
+                    var c = ctvi.collection.color;
+                    GUI.DrawTexture(args.rowRect, EditorGUIUtility.whiteTexture, ScaleMode.StretchToFill, false, 0f, new Color(c.r, c.g, c.b, 1.0f), 0f, 0f);
+                }
+
+                var buttonRect = args.rowRect;
+                buttonRect.xMin = buttonRect.xMax - 24f;
+                GUI.Button(buttonRect, EditorGUIUtility.IconContent("scenepicking_pickable"), "IconButton");
+
+                buttonRect.x -= 20f;
+                GUI.Button(buttonRect, EditorGUIUtility.IconContent("SceneViewCamera"), "IconButton");
+
+                base.RowGUI(args);
+            }
+            else if (args.item is SearchTreeViewItem tvi)
             {
                 for (int i = 0, end = args.GetNumVisibleColumns(); i < end; ++i)
                 {
@@ -57,8 +74,8 @@ namespace UnityEditor.Search.Collections
                 }
             }
             else
-            { 
-                base.RowGUI(args); 
+            {
+                base.RowGUI(args);
             }
         }
 

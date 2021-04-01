@@ -18,6 +18,11 @@ namespace UnityEditor.Search.Collections
 {
     class SearchCollectionWindow : EditorWindow, ISearchCollectionView
     {
+        static class InnerStyles
+        {
+            public static readonly GUIContent collectionIcon = EditorGUIUtility.IconContent("ListView");
+        }
+
         SearchCollectionTreeView m_TreeView;
 
         [SerializeField] string m_SearchText;
@@ -81,6 +86,8 @@ namespace UnityEditor.Search.Collections
                 m_Collections = LoadCollections();
 
             m_TreeView = new SearchCollectionTreeView(m_TreeViewState, this);
+
+            titleContent.image = InnerStyles.collectionIcon.image;
         }
 
         void OnDisable()
@@ -163,12 +170,6 @@ namespace UnityEditor.Search.Collections
                 return;
             
             m_TreeView.Add(new SearchCollection(searchQuery));
-        }
-
-        void Update()
-        {
-            if (focusedWindow == this && SearchField.UpdateBlinkCursorState(EditorApplication.timeSinceStartup))
-                Repaint();
         }
 
         void ClearSearch()

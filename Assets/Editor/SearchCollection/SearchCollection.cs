@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace UnityEditor.Search.Collections
 {
@@ -8,6 +9,7 @@ namespace UnityEditor.Search.Collections
     {
         public SearchCollection()
         {
+            color = Color.clear;
             items = new HashSet<SearchItem>();
             objects = new List<UnityEngine.Object>();
         }
@@ -20,6 +22,7 @@ namespace UnityEditor.Search.Collections
 
         public SearchQuery query;
         public List<UnityEngine.Object> objects;
+        public Color color;
 
         [NonSerialized] public HashSet<SearchItem> items;
     }

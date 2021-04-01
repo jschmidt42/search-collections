@@ -33,7 +33,7 @@ namespace UnityEditor.Search.Collections
         private static IEnumerable<MultiColumnHeaderState.Column> CreateColumns()
         {
             yield return CreateColumn("", 200f, autoResize: true, canSort: false, toggleVisibility: false);
-            yield return CreateColumn("value", 50f);
+            yield return CreateColumn("", 80f);
         }
 
         static MultiColumnHeaderState.Column CreateColumn(string label, float width = 32f, bool autoResize = true, bool canSort = true, bool toggleVisibility = true)

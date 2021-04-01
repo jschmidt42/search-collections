@@ -72,6 +72,11 @@ namespace UnityEditor.Search.Collections
             }
         }
 
+        public virtual bool DrawRow(Rect rowRect)
+        {
+            return false;
+        }
+
         void Refresh()
         {
             if (parent is SearchCollectionTreeViewItem ctvi)
